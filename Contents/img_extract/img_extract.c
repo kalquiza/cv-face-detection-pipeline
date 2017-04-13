@@ -15,10 +15,11 @@
 
 int main (int argc, char *argv[])
 {
+    char input_video_filename[1280], str[100], video_id[25]; int num, den, num_frames, height, width; float frame_rate;
+
     /**
         Connect to postgres database
     */
-    char input_video_filename[1280], str[100], video_id[25]; int num, den, num_frames, height, width; float frame_rate;
 
     PGconn   *db_connection;
     PGresult *db_result;
@@ -31,7 +32,7 @@ int main (int argc, char *argv[])
     }
 
     /**
-        Ask user for video filename
+        Read command line argument for video filename
     */
     printf ("Enter input video name: ");
     fgets(input_video_filename,1280,stdin);
@@ -45,5 +46,34 @@ int main (int argc, char *argv[])
         Extract video metadata
     */
 
-    // TODO: Extract video metadata into database and still images into a new directory
+    // Extract frame rate
+    char frame_rate_command[1280] = "ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 ";
+    FILE *fps = popen(strcat(frame_rate_command, input_video_filename), "r");
+    while(fgets(str,100,fps) != NULL ){
+        char *tokenstring = str;
+        sscanf(tokenstring, "%d/%d", &num,&den);
+    }
+    fclose(fps);
+    frame_rate = num/den;
+
+    // Extract total number of frames
+    char nb_read_frames_command[1280] = "ffprobe -v error -count_frames -select_streams v:0 -show_entries stream=nb_read_frames -of default=nokey=1:noprint_wrappers=1 ";
+    FILE *nb_read_frames = popen(strcat(nb_read_frames_command, input_video_filename), "r");
+    while(fgets(str,100,fps) != NULL ){
+        char *tokenstring = str;
+        sscanf(tokenstring, "%d", &num_frames);
+    }
+    fclose(fps);
+
+    // Extract resolution
+    char res_command[1280] = "ffprobe -v error -of flat=s=_ -select_streams v:0 -show_entries stream=height,width ";
+    FILE *res = popen(strcat(res_command, input_video_filename), "r");
+    while(fgets(str,100,fps) != NULL ){
+        char *tokenstring = str;
+        sscanf(tokenstring, "streams_stream_0_width=%d", &width);
+        sscanf(tokenstring, "streams_stream_0_height=%d", &height);
+    }
+    fclose(fps);
+
+    // TODO: Enter metadata into database and still images into a new directory
 }
