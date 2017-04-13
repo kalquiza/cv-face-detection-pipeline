@@ -30,5 +30,20 @@ int main (int argc, char *argv[])
         exit (EXIT_FAILURE);
     }
 
+    /**
+        Ask user for video filename
+    */
+    printf ("Enter input video name: ");
+    fgets(input_video_filename,1280,stdin);
+    strtok(input_video_filename, "\n");
+    if( access( input_video_filename, F_OK ) == -1 ) {
+        printf("File not found.\n");
+        exit (EXIT_FAILURE);
+    }
+
+    /**
+        Extract video metadata
+    */
+
     // TODO: Extract video metadata into database and still images into a new directory
 }
