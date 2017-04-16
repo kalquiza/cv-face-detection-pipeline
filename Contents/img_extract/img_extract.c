@@ -75,5 +75,40 @@ int main (int argc, char *argv[])
     }
     fclose(fps);
 
-    // TODO: Enter metadata into database and still images into a new directory
+   /**
+        Insert metadata into table
+    */
+    char db_statement[5000];
+    const char* values[4];
+
+    int frame_rate_binary = htonl(*(unsigned long *)&frame_rate);
+    int num_frames_binary = htonl(num_frames);
+    int width_binary = htonl(width);
+    int height_binary = htonl(height);
+    values[0] = (char *) &frame_rate_binary;
+    values[1] = (char *) &num_frames_binary;
+    values[2] = (char *) &width_binary;
+    values[3] = (char *) &height_binary;
+    int lengths[4] = {sizeof(frame_rate_binary), sizeof(num_frames_binary), sizeof(width_binary), sizeof(height_binary)};
+    int binary[4] = {1, 1, 1, 1};
+
+    strncpy (&db_statement[0], "INSERT INTO input_video_metadata (frame_rate, num_frames, height, width) VALUES ($1::float4, $2::int4, $3::int4, $4::int4) RETURNING video_id", 5000);
+    db_result = PQexecParams (db_connection, db_statement, 4, NULL, values, lengths, binary, 0);
+    if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+    {
+        printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+    }
+    else
+    {
+        if (PQntuples(db_result) == 1)
+        {
+            if (strlen(PQgetvalue(db_result, 0, 0)) < 25)
+            {
+                strncpy (&video_id[0], PQgetvalue(db_result, 0, 0), 25);
+            }
+        }
+        PQclear(db_result);
+    }
+
+    // TODO: Add still images into a new directory
 }
