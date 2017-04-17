@@ -20,7 +20,6 @@ int main (int argc, char *argv[])
     /**
         Connect to postgres database
     */
-
     PGconn   *db_connection;
     PGresult *db_result;
     db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
@@ -110,5 +109,23 @@ int main (int argc, char *argv[])
         PQclear(db_result);
     }
 
-    // TODO: Add still images into a new directory
+    /**
+        Extract images into directory
+    */
+    char dir[25] = "video_id_";
+    mkdir (strcat(dir,(char *)video_id), 0755);
+    char img_extract_command_format[] = "ffmpeg -i %s -vf fps=%f ./video_id_%s/video_id_%s_%%d.png";
+    char img_extract_command[1280];
+    sprintf(img_extract_command, img_extract_command_format, input_video_filename, frame_rate, &video_id[0], &video_id[0]);
+    popen(img_extract_command, "r");
+
+    /**
+        Print operation results
+    */
+    printf ("filename: %s\n", input_video_filename);
+    printf ("video_id: %s\n", &video_id[0]);
+    printf("frame_rate: %f\n", frame_rate);
+    printf("num_frames: %d\n", num_frames);
+    printf("width: %d\n", width);
+    printf("height: %d\n", height);
 }
