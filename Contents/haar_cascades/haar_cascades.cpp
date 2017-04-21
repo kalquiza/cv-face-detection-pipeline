@@ -1,6 +1,6 @@
 /**
     haar_cascades.cpp
-    Purpose: Use haar cascades to determine bounding boxes for facial features
+    Purpose: Use Haar cascades to determine bounding boxes for facial features
 
     @author Kristoffer Alquiza
 */
@@ -114,7 +114,133 @@ int main (int argc, char *argv[])
         strcpy (&input_filename[0], img_dir);
         printf("processing %s\n", img_dir);
 
-    // TODO: Process each image to determine boundng boxes
+        // Find bounding boxes using Haar cascades
+        if (face_cascade.load ("./haarcascade_frontalface_alt2.xml") && left_eye_cascade.load ("./ojoI.xml") && right_eye_cascade.load ("./ojoD.xml") && nose_cascade.load ("./Nariz.xml") && mouth_cascade.load ("./Mouth.xml")) // loaded additional cascades for mouth and nose
+        {
+            bounding_box_face_x           = 0;
+            bounding_box_face_y           = 0;
+            bounding_box_face_width       = 0;
+            bounding_box_face_height      = 0;
+            bounding_box_left_eye_x       = 0;
+            bounding_box_left_eye_y       = 0;
+            bounding_box_left_eye_width   = 0;
+            bounding_box_left_eye_height  = 0;
+            bounding_box_right_eye_x      = 0;
+            bounding_box_right_eye_y      = 0;
+            bounding_box_right_eye_width  = 0;
+            bounding_box_right_eye_height = 0;
+            bounding_box_nose_x           = 0;
+            bounding_box_nose_y           = 0;
+            bounding_box_nose_width       = 0;
+            bounding_box_nose_height      = 0;
+            bounding_box_mouth_x          = 0;
+            bounding_box_mouth_y          = 0;
+            bounding_box_mouth_width      = 0;
+            bounding_box_mouth_height     = 0;
 
+            source_image_gray = imread (input_filename, CV_LOAD_IMAGE_GRAYSCALE);
+            if (!source_image_gray.empty())
+            {
+                equalizeHist (source_image_gray, source_image_gray);
+
+                // face
+                face_cascade.detectMultiScale (source_image_gray, face, scale_factor, min_neighbors, CV_HAAR_FIND_BIGGEST_OBJECT);
+
+                // set minimum and maximum values
+                if (face.size() > 0)
+                {
+                    bounding_box_face_x      = face[0].x;
+                    bounding_box_face_y      = face[0].y;
+                    bounding_box_face_width  = face[0].width;
+                    bounding_box_face_height = face[0].height;
+                    minimum_width_left_eye =  0.18 * bounding_box_face_width;
+                    minimum_height_left_eye = 0.14 * bounding_box_face_height;
+                    minimum_width_right_eye =  minimum_width_left_eye;
+                    minimum_height_right_eye = minimum_height_left_eye;
+                    if ((minimum_width_left_eye < 18) || (minimum_width_right_eye < 18) || (minimum_height_left_eye < 12) || (minimum_height_right_eye < 12))
+                    {
+                        minimum_width_left_eye   = 18;
+                        minimum_height_left_eye  = 12;
+                        minimum_width_right_eye  = 18;
+                        minimum_height_right_eye = 12;
+                    }
+                    maximum_width_left_eye   = minimum_width_left_eye * 2;
+                    maximum_height_left_eye  = minimum_height_left_eye * 2;
+                    maximum_width_right_eye  = minimum_width_right_eye * 2;
+                    maximum_height_right_eye = minimum_height_right_eye * 2;
+
+                    minimum_width_nose =  0.18 * bounding_box_face_width;
+                    minimum_height_nose = 0.14 * bounding_box_face_height;
+                    minimum_width_mouth = minimum_width_nose;
+                    minimum_height_mouth = minimum_height_nose;
+                    if ((minimum_width_nose < 25) || (minimum_width_mouth < 25) || (minimum_height_mouth < 15) || (minimum_height_mouth < 15))
+                    {
+                        minimum_width_nose   = 25;
+                        minimum_height_nose  = 15;
+                        minimum_width_mouth  = 25;
+                        minimum_height_mouth = 15;
+                    }
+                    maximum_width_nose   = minimum_width_nose * 2;
+                    maximum_height_nose  = minimum_height_nose * 2;
+                    maximum_width_mouth  = minimum_width_mouth * 2;
+                    maximum_height_mouth = minimum_height_mouth * 2;
+
+                  // left_eye
+                  source_image_gray_left_eye_region = source_image_gray (Rect (bounding_box_face_x + bounding_box_face_width / 2, bounding_box_face_y + bounding_box_face_height / 5.5, bounding_box_face_width / 2, bounding_box_face_height / 3));
+                  left_eye_cascade.detectMultiScale (source_image_gray_left_eye_region, eyes, scale_factor, min_neighbors, CV_HAAR_SCALE_IMAGE, Size(minimum_width_left_eye, minimum_height_left_eye), Size(maximum_width_left_eye, maximum_height_left_eye));
+                  number_of_left_eyes_detected = eyes.size();
+                  if (eyes.size() > 0)
+                  {
+                      bounding_box_left_eye_x      = bounding_box_face_x + bounding_box_face_width / 2 + eyes[0].x;
+                      bounding_box_left_eye_y      = bounding_box_face_y + bounding_box_face_height / 5.5 + eyes[0].y;
+                      bounding_box_left_eye_width  = eyes[0].width;
+                      bounding_box_left_eye_height = eyes[0].height;
+                  }
+
+                  // right_eye
+                  source_image_gray_right_eye_region = source_image_gray (Rect (bounding_box_face_x, bounding_box_face_y + bounding_box_face_height / 5.5, bounding_box_face_width / 2, bounding_box_face_height / 3));
+                  number_of_right_eyes_detected = 0;
+                  right_eye_cascade.detectMultiScale (source_image_gray_right_eye_region, eyes, scale_factor, min_neighbors, CV_HAAR_SCALE_IMAGE, Size(minimum_width_right_eye, minimum_height_right_eye), Size(maximum_width_right_eye, maximum_height_right_eye));
+                  number_of_right_eyes_detected = eyes.size();
+                  if (eyes.size() > 0)
+                  {
+                      bounding_box_right_eye_x      = bounding_box_face_x + eyes[0].x;
+                      bounding_box_right_eye_y      = bounding_box_face_y + bounding_box_face_height / 5.5 + eyes[0].y;
+                      bounding_box_right_eye_width  = eyes[0].width;
+                      bounding_box_right_eye_height = eyes[0].height;
+                  }
+
+                  // nose
+                  int bounding_box_eyes_y = (bounding_box_right_eye_y + bounding_box_left_eye_y) / 2;
+                  source_image_gray_nose_region = source_image_gray (Rect (bounding_box_face_x, bounding_box_eyes_y, bounding_box_face_width, bounding_box_face_height - (bounding_box_eyes_y - bounding_box_face_y)));
+                  number_of_noses_detected = 0;
+                  nose_cascade.detectMultiScale (source_image_gray_nose_region, nose, scale_factor, min_neighbors, CV_HAAR_SCALE_IMAGE, Size(minimum_width_nose, minimum_height_nose), Size(maximum_width_nose, maximum_height_nose));
+                  number_of_noses_detected = nose.size();
+                  if (nose.size() > 0)
+                  {
+                      bounding_box_nose_x      = bounding_box_face_x + nose[0].x;
+                      bounding_box_nose_y      = bounding_box_eyes_y + nose[0].y;
+                      bounding_box_nose_width  = nose[0].width;
+                      bounding_box_nose_height = nose[0].height;
+                  }
+
+                  // mouth
+                  source_image_gray_mouth_region = source_image_gray (Rect (bounding_box_face_x, bounding_box_nose_y, bounding_box_face_width, bounding_box_face_height - (bounding_box_nose_y - bounding_box_face_y)));
+                  number_of_mouths_detected = 0;
+                  mouth_cascade.detectMultiScale (source_image_gray_mouth_region, mouth, scale_factor, min_neighbors, CV_HAAR_SCALE_IMAGE, Size(minimum_width_mouth, minimum_height_mouth), Size(maximum_width_mouth, maximum_height_mouth));
+                  number_of_mouths_detected = mouth.size();
+                  if (mouth.size() > 0)
+                  {
+                      bounding_box_mouth_x      = bounding_box_face_x + mouth[0].x;
+                      bounding_box_mouth_y      = bounding_box_nose_y + mouth[0].y;
+                      bounding_box_mouth_width  = mouth[0].width;
+                      bounding_box_mouth_height = mouth[0].height;
+                  }
+
+                }
+            }
+        }
+
+        // TODO: Insert bounding box data into table
     }
 }
