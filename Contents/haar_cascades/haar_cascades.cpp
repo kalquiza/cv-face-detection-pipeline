@@ -241,6 +241,63 @@ int main (int argc, char *argv[])
             }
         }
 
-        // TODO: Insert bounding box data into table
+        /**
+            Insert bounding box data into table
+        */
+        int i_binary = htonl(i);
+        int video_id_binary = htonl(video_id);
+        int bounding_box_face_width_binary = htonl(bounding_box_face_width);
+        int bounding_box_face_height_binary = htonl(bounding_box_face_height);
+        int bounding_box_left_eye_width_binary = htonl(bounding_box_left_eye_width);
+        int bounding_box_left_eye_height_binary = htonl(bounding_box_left_eye_height);
+        int bounding_box_right_eye_width_binary = htonl(bounding_box_right_eye_width);
+        int bounding_box_right_eye_height_binary = htonl(bounding_box_right_eye_height);
+        int bounding_box_nose_width_binary = htonl(bounding_box_nose_width);
+        int bounding_box_nose_height_binary = htonl(bounding_box_nose_height);
+        int bounding_box_mouth_width_binary = htonl(bounding_box_mouth_width);
+        int bounding_box_mouth_height_binary = htonl(bounding_box_mouth_height);
+        int height_binary = htonl(height);
+
+        const char* values[17];
+        values[0] = (char *) &i_binary;
+        values[1] = (char *) &video_id_binary;
+
+        char point_format[] = "%d,%d";
+        char face_point[25];
+        char left_eye_point[25];
+        char right_eye_point[25];
+        char nose_point[25];
+        char mouse_point[25];
+
+        sprintf(face_point, point_format, bounding_box_face_x, bounding_box_face_y);
+        values[2] = face_point;
+        values[3] = (char *) &bounding_box_face_width_binary;
+        values[4] = (char *) &bounding_box_face_height_binary;
+
+        sprintf(left_eye_point, point_format, bounding_box_left_eye_x, bounding_box_left_eye_y);
+        values[5] = left_eye_point;
+        values[6] = (char *) &bounding_box_left_eye_width_binary;
+        values[7] = (char *) &bounding_box_left_eye_height_binary;
+
+        sprintf(right_eye_point, point_format, bounding_box_right_eye_x, bounding_box_right_eye_y);
+        values[8] = right_eye_point;
+        values[9] = (char *) &bounding_box_right_eye_width_binary;
+        values[10] = (char *) &bounding_box_right_eye_height_binary;
+
+        sprintf(nose_point, point_format, bounding_box_nose_x, bounding_box_nose_y);
+        values[11] = nose_point;
+        values[12] = (char *) &bounding_box_nose_width_binary;
+        values[13] = (char *) &bounding_box_nose_height_binary;
+
+        sprintf(mouse_point, point_format, bounding_box_mouth_x, bounding_box_mouth_y);
+        values[14] = mouse_point;
+        values[15] = (char *) &bounding_box_mouth_width_binary;
+        values[16] = (char *) &bounding_box_mouth_height_binary;
+
+        int lengths[17] = {sizeof(i_binary), sizeof(video_id_binary), sizeof(values[2]) ,sizeof(bounding_box_face_width_binary), sizeof(bounding_box_face_height_binary), sizeof(values[5]), sizeof(bounding_box_left_eye_width_binary), sizeof(bounding_box_left_eye_height_binary), sizeof(values[8]) ,sizeof(bounding_box_right_eye_width_binary), sizeof(bounding_box_right_eye_height_binary), sizeof(values[11]) ,sizeof(bounding_box_nose_width_binary), sizeof(bounding_box_nose_height_binary), sizeof(values[14]) ,sizeof(bounding_box_mouth_width_binary), sizeof(bounding_box_mouth_height_binary)};
+        int binary[17] = {1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1};
+
+        strncpy (&db_statement[0], "INSERT INTO bounding_box_data (frame_id, video_id, face_upper_left, face_width, face_height, left_eye_upper_left, left_eye_width, left_eye_height, right_eye_upper_left, right_eye_width, right_eye_height, nose_upper_left, nose_width, nose_height, mouth_upper_left, mouth_width, mouth_height) VALUES ($1::int4, $2::int4, $3::point, $4::int4, $5::int4, $6::point, $7::int4, $8::int4, $9::point, $10::int4, $11::int4, $12::point, $13::int4, $14::int4, $15::point, $16::int4, $17::int4)", 5000);
+        db_result = PQexecParams (db_connection, db_statement, 17, NULL, values, lengths, binary, 0);
     }
 }
