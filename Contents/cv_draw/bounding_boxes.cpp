@@ -89,10 +89,219 @@ int main (int argc, char *argv[])
     snprintf(&bounding_box_directory[0], sizeof(bounding_box_directory) - 1, "bounding_box_video_id_%d", video_id);
     mkdir (bounding_box_directory, 0755);
 
-    // TODO: Draw bounding boxes for each still image and create bounding box video
-
+    /**
+        For each frame draw bounding boxes for facial features
+    */
     for (int i = 1; i <= num_frames; i++)
     {
+        // Load source image
+        cv::Mat source_image;
+        char input_filename[1280];
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", v, v, i);
+        printf("processing %s\n", input_filename);
+        source_image = imread (&input_filename[0], 1);
 
+        if (!source_image.empty()) {
+            // Query bounding box data
+            char bounding_box_query_format[1280] = "SELECT %s_upper_left, %s_width, %s_height FROM bounding_box_data WHERE video_id = %d AND frame_id = %d";
+            char bounding_box_query[1280];
+            char bounding_box_pt[50];
+            int bounding_box_x = 0;
+            int bounding_box_y = 0;
+            int bounding_box_width = 0;
+            int bounding_box_height = 0;
+            CvPoint point_P1, point_P2;
+
+
+            // Draw bounding box for face (Blue)
+            char face[] = "face";
+            sprintf(bounding_box_query, bounding_box_query_format, face, face, face, v, i);
+            strncpy (&db_statement[0], bounding_box_query, 5000);
+            db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
+            if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+            {
+                printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+            }
+            else
+            {
+                if (PQntuples(db_result) == 1)
+                {
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 0), 25);
+                    sscanf(res, "%s", bounding_box_pt);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 1), 25);
+                    sscanf(res, "%d", &bounding_box_width);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 2), 25);
+                    sscanf(res, "%d", &bounding_box_height);
+                }
+                PQclear(db_result);
+            }
+
+            sscanf(bounding_box_pt, "(%i,%i)", &bounding_box_x, &bounding_box_y);
+            point_P1 = cvPoint (bounding_box_x, bounding_box_y);
+            point_P2 = cvPoint (bounding_box_x + bounding_box_width, bounding_box_y + bounding_box_height);
+
+            if ((bounding_box_x > 0) && (bounding_box_y > 0)) {
+                rectangle (source_image, point_P1, point_P2, CV_RGB (0, 0, 255), 2, 8, 0);
+            }
+            bounding_box_x = 0;
+            bounding_box_y = 0;
+            bounding_box_width = 0;
+            bounding_box_height = 0;
+
+            // Draw bounding box for left eye (Green)
+            char l_eye[] = "left_eye";
+            sprintf(bounding_box_query, bounding_box_query_format, l_eye, l_eye, l_eye, v, i);
+            strncpy (&db_statement[0], bounding_box_query, 5000);
+            db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
+            if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+            {
+                printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+            }
+            else
+            {
+                if (PQntuples(db_result) == 1)
+                {
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 0), 25);
+                    sscanf(res, "%s", bounding_box_pt);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 1), 25);
+                    sscanf(res, "%d", &bounding_box_width);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 2), 25);
+                    sscanf(res, "%d", &bounding_box_height);
+                }
+                PQclear(db_result);
+            }
+
+            sscanf(bounding_box_pt, "(%i,%i)", &bounding_box_x, &bounding_box_y);
+            point_P1 = cvPoint (bounding_box_x, bounding_box_y);
+            point_P2 = cvPoint (bounding_box_x + bounding_box_width, bounding_box_y + bounding_box_height);
+
+            if ((bounding_box_x > 0) && (bounding_box_y > 0)) {
+                rectangle (source_image, point_P1, point_P2, CV_RGB (0, 255, 0), 2, 8, 0);
+            }
+            bounding_box_x = 0;
+            bounding_box_y = 0;
+            bounding_box_width = 0;
+            bounding_box_height = 0;
+
+            // Draw bounding box for right eye (Red)
+            char r_eye[] = "right_eye";
+            sprintf(bounding_box_query, bounding_box_query_format, r_eye, r_eye, r_eye, v, i);
+            strncpy (&db_statement[0], bounding_box_query, 5000);
+            db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
+            if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+            {
+                printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+            }
+            else
+            {
+                if (PQntuples(db_result) == 1)
+                {
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 0), 25);
+                    sscanf(res, "%s", bounding_box_pt);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 1), 25);
+                    sscanf(res, "%d", &bounding_box_width);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 2), 25);
+                    sscanf(res, "%d", &bounding_box_height);
+                }
+                PQclear(db_result);
+            }
+
+            sscanf(bounding_box_pt, "(%i,%i)", &bounding_box_x, &bounding_box_y);
+            point_P1 = cvPoint (bounding_box_x, bounding_box_y);
+            point_P2 = cvPoint (bounding_box_x + bounding_box_width, bounding_box_y + bounding_box_height);
+
+            if ((bounding_box_x > 0) && (bounding_box_y > 0)) {
+                rectangle (source_image, point_P1, point_P2, CV_RGB (255, 0, 0), 2, 8, 0);
+            }
+            bounding_box_x = 0;
+            bounding_box_y = 0;
+            bounding_box_width = 0;
+            bounding_box_height = 0;
+
+            // Draw bounding box for nose (Yellow)
+            char nose[] = "nose";
+            sprintf(bounding_box_query, bounding_box_query_format, nose, nose, nose, v, i);
+            strncpy (&db_statement[0], bounding_box_query, 5000);
+            db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
+            if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+            {
+                printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+            }
+            else
+            {
+                if (PQntuples(db_result) == 1)
+                {
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 0), 25);
+                    sscanf(res, "%s", bounding_box_pt);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 1), 25);
+                    sscanf(res, "%d", &bounding_box_width);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 2), 25);
+                    sscanf(res, "%d", &bounding_box_height);
+                }
+                PQclear(db_result);
+            }
+
+            sscanf(bounding_box_pt, "(%i,%i)", &bounding_box_x, &bounding_box_y);
+            point_P1 = cvPoint (bounding_box_x, bounding_box_y);
+            point_P2 = cvPoint (bounding_box_x + bounding_box_width, bounding_box_y + bounding_box_height);
+
+            if ((bounding_box_x > 0) && (bounding_box_y > 0)) {
+                rectangle (source_image, point_P1, point_P2, CV_RGB (255, 255, 0), 2, 8, 0);
+            }
+            bounding_box_x = 0;
+            bounding_box_y = 0;
+            bounding_box_width = 0;
+            bounding_box_height = 0;
+
+            // Bounding box for mouth (Magenta)
+            char mouth[] = "mouth";
+            sprintf(bounding_box_query, bounding_box_query_format, mouth, mouth, mouth, v, i);
+            strncpy (&db_statement[0], bounding_box_query, 5000);
+            db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
+            if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
+            {
+                printf ("Postgres INSERT error: %s\n", PQerrorMessage(db_connection));
+            }
+            else
+            {
+                if (PQntuples(db_result) == 1)
+                {
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 0), 25);
+                    sscanf(res, "%s", bounding_box_pt);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 1), 25);
+                    sscanf(res, "%d", &bounding_box_width);
+                    strncpy (&res[0], PQgetvalue(db_result, 0, 2), 25);
+                    sscanf(res, "%d", &bounding_box_height);
+                }
+                PQclear(db_result);
+            }
+
+            sscanf(bounding_box_pt, "(%i,%i)", &bounding_box_x, &bounding_box_y);
+            point_P1 = cvPoint (bounding_box_x, bounding_box_y);
+            point_P2 = cvPoint (bounding_box_x + bounding_box_width, bounding_box_y + bounding_box_height);
+
+            if ((bounding_box_x > 0) && (bounding_box_y > 0)) {
+                rectangle (source_image, point_P1, point_P2, CV_RGB (255, 0, 255), 2, 8, 0);
+            }
+            bounding_box_x = 0;
+            bounding_box_y = 0;
+            bounding_box_width = 0;
+            bounding_box_height = 0;
+
+            // Save image to directory ./bounding_box_video_id_*
+            snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s_%d.png", bounding_box_directory, bounding_box_directory, i);
+            imwrite (output_filename, source_image);
+        }
     }
+
+    /**
+        Create MP4 bounding_box_movie_video_id_* in directory ./bounding_box_VIDEO_ID_*
+    */
+    printf("Creating bounding box video...\n");
+
+    snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s.mp4", bounding_box_directory, bounding_box_directory);
+    char video_export_command[1280];
+    snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, bounding_box_directory, bounding_box_directory, bounding_box_directory, bounding_box_directory);
+    printf("%s", video_export_command);
+    popen(video_export_command, "r");
 }
