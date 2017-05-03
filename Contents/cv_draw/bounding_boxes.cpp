@@ -27,6 +27,7 @@ int main (int argc, char *argv[])
     /**
         Connect to postgres database
     */
+    char db_statement[5000];
     PGconn   *db_connection;
     PGresult *db_result;
     db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
