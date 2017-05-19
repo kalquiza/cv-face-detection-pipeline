@@ -15,14 +15,16 @@
 
 int main (int argc, char *argv[])
 {
-    char input_video_filename[1280], str[100], video_id[25]; int num, den, num_frames, height, width; float frame_rate;
+    char input_video_filename[1280], conninfo[1280], str[100], video_id[25]; int num, den, num_frames, height, width; float frame_rate;
 
     /**
         Connect to postgres database
     */
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
+    FILE *f = fopen("../database/conninfo", "r");
+    fgets(conninfo, 1280, f);
+    db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -131,5 +133,5 @@ int main (int argc, char *argv[])
     printf("height: %d\n", height);
     */
 
-    cout << "\nCompleted.\n";
+    printf("Completed.\n");
 }

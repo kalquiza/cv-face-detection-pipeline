@@ -27,7 +27,7 @@ int main (int argc, char *argv[])
     CascadeClassifier face_cascade, left_eye_cascade, right_eye_cascade, nose_cascade, mouth_cascade;
     std::vector<Rect> face, eyes, nose, mouth;
 
-    char input_filename[1280];
+    char input_filename[1280], conninfo[1280];
     int number_of_left_eyes_detected, number_of_right_eyes_detected, number_of_noses_detected, number_of_mouths_detected, min_neighbors;
     int maximum_width_left_eye, maximum_height_left_eye, maximum_width_right_eye, maximum_height_right_eye;
     int minimum_width_left_eye, minimum_height_left_eye, minimum_width_right_eye, minimum_height_right_eye;
@@ -50,7 +50,9 @@ int main (int argc, char *argv[])
     char db_statement[5000];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
+    FILE *f = fopen("../database/conninfo", "r");
+    fgets(conninfo, 1280, f);
+    db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));

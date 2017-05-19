@@ -123,10 +123,12 @@ int main (int argc, char *argv[])
     /**
         Connect to postgres database
     */
-    char db_statement[10000];
+    char db_statement[10000], conninfo[1280];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'student'");
+    FILE *f = fopen("../database/conninfo", "r");
+    fgets(conninfo, 1280, f);
+    db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));

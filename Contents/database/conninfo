@@ -1,1 +1,1 @@
-
+host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'student'
