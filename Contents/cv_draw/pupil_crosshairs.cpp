@@ -31,7 +31,7 @@ int main (int argc, char *argv[])
     char db_statement[5000];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
+    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -100,8 +100,20 @@ int main (int argc, char *argv[])
         cv::Mat source_image;
         char input_filename[1280];
         snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
-        printf("processing %s\n", input_filename);
 
+	// print progress bar
+  	cout << "\x1B[2K"; // Erase the entire current line.
+  	cout << "\x1B[0E"; // Move to the beginning of the current line.
+        string bar;
+        for (int b = 0; b < 50; b++) {
+           if (b < static_cast<int>(50 * i/num_frames)) {
+              bar += "=";
+           } else {
+              bar += " ";
+           }
+        }
+        cout << "Drawing pupil_crosshairs video_id_" << video_id << " [" << bar << "] " << (static_cast<int>(100 * i/num_frames)) << "% " << "(" << i << "/" << num_frames << ")";
+        flush(cout); // Required
 
         source_image = imread (&input_filename[0], 1);
         if (!source_image.empty()) {
@@ -188,5 +200,9 @@ int main (int argc, char *argv[])
         char video_export_command[1280];
         snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, eye_pupil_tracking_directory, eye_pupil_tracking_directory, eye_pupil_tracking_directory, eye_pupil_tracking_directory);
         printf("%s", video_export_command);
-        popen(video_export_command, "r");
+    	FILE *pipe_fp;
+    	pipe_fp = popen(video_export_command, "r");
+    	pclose(pipe_fp);
+
+    	cout << "\nCompleted.\n";
 }

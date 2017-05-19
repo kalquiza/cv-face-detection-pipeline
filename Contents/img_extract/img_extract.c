@@ -1,5 +1,5 @@
 /**
-    img_extract.cpp
+    img_extract.c
     Purpose: Extract still images from video
 
     @author Kristoffer Alquiza
@@ -22,7 +22,7 @@ int main (int argc, char *argv[])
     */
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
+    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -117,15 +117,19 @@ int main (int argc, char *argv[])
     char img_extract_command_format[] = "ffmpeg -i %s -vf fps=%f ./video_id_%s/video_id_%s_%%d.png";
     char img_extract_command[1280];
     sprintf(img_extract_command, img_extract_command_format, input_video_filename, frame_rate, &video_id[0], &video_id[0]);
-    popen(img_extract_command, "r");
+    FILE *pipe_fp;
+    pipe_fp = popen(img_extract_command, "r");
+    pclose(pipe_fp);
 
+    //Print operation results
     /**
-        Print operation results
-    */
     printf ("filename: %s\n", input_video_filename);
     printf ("video_id: %s\n", &video_id[0]);
     printf("frame_rate: %f\n", frame_rate);
     printf("num_frames: %d\n", num_frames);
     printf("width: %d\n", width);
     printf("height: %d\n", height);
+    */
+
+    cout << "\nCompleted.\n";
 }

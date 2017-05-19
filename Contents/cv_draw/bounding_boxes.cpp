@@ -30,7 +30,7 @@ int main (int argc, char *argv[])
     char db_statement[5000];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
+    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -98,9 +98,22 @@ int main (int argc, char *argv[])
         // Load source image
         cv::Mat source_image;
         char input_filename[1280];
-        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", v, v, i);
-        printf("processing %s\n", input_filename);
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
         source_image = imread (&input_filename[0], 1);
+
+	// print progress bar
+  	cout << "\x1B[2K"; // Erase the entire current line.
+  	cout << "\x1B[0E"; // Move to the beginning of the current line.
+        string bar;
+        for (int b = 0; b < 50; b++) {
+           if (b < static_cast<int>(50 * i/num_frames)) {
+              bar += "=";
+           } else {
+              bar += " ";
+           }
+        }
+        cout << "Drawing bounding_boxes video_id_" << video_id << " [" << bar << "] " << (static_cast<int>(100 * i/num_frames)) << "% " << "(" << i << "/" << num_frames << ")";
+        flush(cout); // Required
 
         if (!source_image.empty()) {
             // Query bounding box data
@@ -116,7 +129,7 @@ int main (int argc, char *argv[])
 
             // Draw bounding box for face (Blue)
             char face[] = "face";
-            sprintf(bounding_box_query, bounding_box_query_format, face, face, face, v, i);
+            sprintf(bounding_box_query, bounding_box_query_format, face, face, face, video_id, i);
             strncpy (&db_statement[0], bounding_box_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -151,7 +164,7 @@ int main (int argc, char *argv[])
 
             // Draw bounding box for left eye (Green)
             char l_eye[] = "left_eye";
-            sprintf(bounding_box_query, bounding_box_query_format, l_eye, l_eye, l_eye, v, i);
+            sprintf(bounding_box_query, bounding_box_query_format, l_eye, l_eye, l_eye, video_id, i);
             strncpy (&db_statement[0], bounding_box_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -186,7 +199,7 @@ int main (int argc, char *argv[])
 
             // Draw bounding box for right eye (Red)
             char r_eye[] = "right_eye";
-            sprintf(bounding_box_query, bounding_box_query_format, r_eye, r_eye, r_eye, v, i);
+            sprintf(bounding_box_query, bounding_box_query_format, r_eye, r_eye, r_eye, video_id, i);
             strncpy (&db_statement[0], bounding_box_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -221,7 +234,7 @@ int main (int argc, char *argv[])
 
             // Draw bounding box for nose (Yellow)
             char nose[] = "nose";
-            sprintf(bounding_box_query, bounding_box_query_format, nose, nose, nose, v, i);
+            sprintf(bounding_box_query, bounding_box_query_format, nose, nose, nose, video_id, i);
             strncpy (&db_statement[0], bounding_box_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -256,7 +269,7 @@ int main (int argc, char *argv[])
 
             // Bounding box for mouth (Magenta)
             char mouth[] = "mouth";
-            sprintf(bounding_box_query, bounding_box_query_format, mouth, mouth, mouth, v, i);
+            sprintf(bounding_box_query, bounding_box_query_format, mouth, mouth, mouth, video_id, i);
             strncpy (&db_statement[0], bounding_box_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -298,11 +311,14 @@ int main (int argc, char *argv[])
     /**
         Create MP4 bounding_box_movie_video_id_* in directory ./bounding_box_VIDEO_ID_*
     */
-    printf("Creating bounding box video...\n");
 
     snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s.mp4", bounding_box_directory, bounding_box_directory);
     char video_export_command[1280];
     snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, bounding_box_directory, bounding_box_directory, bounding_box_directory, bounding_box_directory);
     printf("%s", video_export_command);
-    popen(video_export_command, "r");
+    FILE *pipe_fp;
+    pipe_fp = popen(video_export_command, "r");
+    pclose(pipe_fp);
+
+    cout << "\nCompleted.\n";
 }

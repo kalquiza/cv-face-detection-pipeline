@@ -126,7 +126,7 @@ int main (int argc, char *argv[])
     char db_statement[10000];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
+    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'student'");
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -183,9 +183,7 @@ int main (int argc, char *argv[])
     */
     char output_filename[1280];
     char face_mesh_directory[50];
-    int v = video_id;
-    int n = num_frames;
-    snprintf(&face_mesh_directory[0], sizeof(face_mesh_directory) - 1, "face_mesh_video_id_%d", v);
+    snprintf(&face_mesh_directory[0], sizeof(face_mesh_directory) - 1, "face_mesh_video_id_%d", video_id);
     mkdir (face_mesh_directory, 0755);
 
     // query for stasm data
@@ -197,19 +195,32 @@ int main (int argc, char *argv[])
     /**
         For each frame draw fash mesh
     */
-    for (int i = 1; i <= n; i++) {
-
+    for (int i = 1; i <= num_frames; i++) {
         // load source image
         cv::Mat source_image;
         char input_filename[1280];
-        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", v, v, i);
-        printf("processing %s\n", input_filename);
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
+
+	// print progress bar
+  	cout << "\x1B[2K"; // Erase the entire current line.
+  	cout << "\x1B[0E"; // Move to the beginning of the current line.
+        string bar;
+        for (int b = 0; b < 50; b++) {
+           if (b < static_cast<int>(50 * i/num_frames)) {
+              bar += "=";
+           } else {
+              bar += " ";
+           }
+        }
+        cout << "Drawing delaunay_triangulation video_id_" << video_id << " [" << bar << "] " << (static_cast<int>(100 * i/num_frames)) << "% " << "(" << i << "/" << num_frames << ")";
+        flush(cout); // Required
+
         source_image = imread (&input_filename[0], 1);
         if (!source_image.empty()) {
 
 
             // Query database for 77 STASM facial data points
-            sprintf(stasm_query, stasm_query_format, v, i);
+            sprintf(stasm_query, stasm_query_format, video_id, i);
             strncpy (&db_statement[0], stasm_query, 5000);
             db_result = PQexecParams (db_connection, db_statement, 0, NULL, 0, 0, 0, 0);
             if (PQresultStatus(db_result) != PGRES_TUPLES_OK)
@@ -262,6 +273,9 @@ int main (int argc, char *argv[])
     char video_export_command[1280];
     snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, face_mesh_directory, face_mesh_directory, face_mesh_directory, face_mesh_directory);
     printf("%s", video_export_command);
-    popen(video_export_command, "r");
+    FILE *pipe_fp;
+    pipe_fp = popen(video_export_command, "r");
+    pclose(pipe_fp);
 
+    cout << "\nCompleted.\n";
 }

@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
     char db_statement[5000];
     PGconn   *db_connection;
     PGresult *db_result;
-    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'cvface'");
+    db_connection = PQconnectdb("host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'postgres' password = 'opencv'");
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -99,11 +99,6 @@ int main (int argc, char *argv[])
         PQclear(db_result);
     }
 
-    printf("video_id: %d\n", video_id);
-    printf("num_frames: %d\n", num_frames);
-    printf("width: %d\n", width);
-    printf("height %d\n", height);
-
     /**
         Process the directory of extracted images
     */
@@ -113,7 +108,20 @@ int main (int argc, char *argv[])
         char img_dir[1280];
         sprintf(img_dir, img_dir_format, video_id, video_id, i);
         strcpy (&input_filename[0], img_dir);
-        printf("processing %s\n", img_dir);
+
+	// print progress bar
+  	cout << "\x1B[2K"; // Erase the entire current line.
+  	cout << "\x1B[0E"; // Move to the beginning of the current line.
+        string bar;
+        for (int b = 0; b < 50; b++) {
+           if (b < static_cast<int>(50 * i/num_frames)) {
+              bar += "=";
+           } else {
+              bar += " ";
+           }
+        }
+        cout << "Processing haar_cascades video_id_" << video_id << " [" << bar << "] " << (static_cast<int>(100 * i/num_frames)) << "% " << "(" << i << "/" << num_frames << ")";
+        flush(cout); // Required
 
         // Find bounding boxes using Haar cascades
         if (face_cascade.load ("./haarcascade_frontalface_alt2.xml") && left_eye_cascade.load ("./ojoI.xml") && right_eye_cascade.load ("./ojoD.xml") && nose_cascade.load ("./Nariz.xml") && mouth_cascade.load ("./Mouth.xml")) // loaded additional cascades for mouth and nose
@@ -301,4 +309,6 @@ int main (int argc, char *argv[])
         strncpy (&db_statement[0], "INSERT INTO bounding_box_data (frame_id, video_id, face_upper_left, face_width, face_height, left_eye_upper_left, left_eye_width, left_eye_height, right_eye_upper_left, right_eye_width, right_eye_height, nose_upper_left, nose_width, nose_height, mouth_upper_left, mouth_width, mouth_height) VALUES ($1::int4, $2::int4, $3::point, $4::int4, $5::int4, $6::point, $7::int4, $8::int4, $9::point, $10::int4, $11::int4, $12::point, $13::int4, $14::int4, $15::point, $16::int4, $17::int4)", 5000);
         db_result = PQexecParams (db_connection, db_statement, 17, NULL, values, lengths, binary, 0);
     }
+
+	cout << "\nCompleted.\n";
 }
