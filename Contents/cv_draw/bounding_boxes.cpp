@@ -31,7 +31,9 @@ int main (int argc, char *argv[])
     PGconn   *db_connection;
     PGresult *db_result;
     FILE *f = fopen("../database/conninfo", "r");
-    fgets(conninfo, 1280, f);
+    if (fgets(conninfo, 1280, f)==NULL) {
+	printf("Missing database credentials\n");
+    }
     db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
@@ -88,9 +90,12 @@ int main (int argc, char *argv[])
         Create a new directory to store images and video
     */
     char output_filename[1280];
-    char bounding_box_directory[50];
-    snprintf(&bounding_box_directory[0], sizeof(bounding_box_directory) - 1, "bounding_box_video_id_%d", video_id);
-    mkdir (bounding_box_directory, 0755);
+    char bounding_boxes_directory[100];
+    char bounding_boxes_img_directory[100];
+    snprintf(&bounding_boxes_directory[0], sizeof(bounding_boxes_directory) - 1, "../../Output/video_id_%d/bounding_boxes", video_id);
+    snprintf(&bounding_boxes_img_directory[0], sizeof(bounding_boxes_img_directory) - 1, "%s/bounding_boxes_img", bounding_boxes_directory);
+    mkdir (bounding_boxes_directory, 0755);
+    mkdir (bounding_boxes_img_directory, 0755);
 
     /**
         For each frame draw bounding boxes for facial features
@@ -100,7 +105,7 @@ int main (int argc, char *argv[])
         // Load source image
         cv::Mat source_image;
         char input_filename[1280];
-        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "../../Output/video_id_%d/img_extract/video_id_%d_%d.png", video_id, video_id, i);
         source_image = imread (&input_filename[0], 1);
 
 	// print progress bar
@@ -304,19 +309,19 @@ int main (int argc, char *argv[])
             bounding_box_width = 0;
             bounding_box_height = 0;
 
-            // Save image to directory ./bounding_box_video_id_*
-            snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s_%d.png", bounding_box_directory, bounding_box_directory, i);
+            // Save image to directory bounding_boxes/bounding_boxes_img
+            snprintf (&output_filename[0], sizeof(output_filename) - 1, "%s/bounding_boxes_video_id_%d_%d.png", bounding_boxes_img_directory, video_id, i);
             imwrite (output_filename, source_image);
         }
     }
 
     /**
-        Create MP4 bounding_box_movie_video_id_* in directory ./bounding_box_VIDEO_ID_*
+        Create MP4 bounding_boxes_video_id_*
     */
 
-    snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s.mp4", bounding_box_directory, bounding_box_directory);
+    snprintf (&output_filename[0], sizeof(output_filename) - 1,  "%s/bounding_boxes_video_id_%d.mp4", bounding_boxes_directory, video_id);
     char video_export_command[1280];
-    snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, bounding_box_directory, bounding_box_directory, bounding_box_directory, bounding_box_directory);
+    snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i %s/bounding_boxes_video_id_%d_%%d.png -c:v libx264 %s/bounding_boxes_video_id_%d.mp4", frame_rate, bounding_boxes_img_directory, video_id, bounding_boxes_directory, video_id);
     printf("%s", video_export_command);
     FILE *pipe_fp;
     pipe_fp = popen(video_export_command, "r");

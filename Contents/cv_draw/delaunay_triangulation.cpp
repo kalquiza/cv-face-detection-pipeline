@@ -127,7 +127,9 @@ int main (int argc, char *argv[])
     PGconn   *db_connection;
     PGresult *db_result;
     FILE *f = fopen("../database/conninfo", "r");
-    fgets(conninfo, 1280, f);
+    if (fgets(conninfo, 1280, f)==NULL) {
+	printf("Missing database credentials\n");
+    }
     db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
@@ -184,9 +186,12 @@ int main (int argc, char *argv[])
         Create a new directory to store images and video
     */
     char output_filename[1280];
-    char face_mesh_directory[50];
-    snprintf(&face_mesh_directory[0], sizeof(face_mesh_directory) - 1, "face_mesh_video_id_%d", video_id);
-    mkdir (face_mesh_directory, 0755);
+    char delaunay_triangulation_directory[100];
+    char delaunay_triangulation_img_directory[100];
+    snprintf(&delaunay_triangulation_directory[0], sizeof(delaunay_triangulation_directory) - 1, "../../Output/video_id_%d/delaunay_triangulation", video_id);
+    snprintf(&delaunay_triangulation_img_directory[0], sizeof(delaunay_triangulation_img_directory) - 1, "%s/delaunay_triangulation_img", delaunay_triangulation_directory);
+    mkdir (delaunay_triangulation_directory, 0755);
+    mkdir (delaunay_triangulation_img_directory, 0755);
 
     // query for stasm data
     char stasm_query_format[2000] = "SELECT data_point_0, data_point_1, data_point_2, data_point_3, data_point_4, data_point_5, data_point_6, data_point_7, data_point_8, data_point_9, data_point_1, data_point_2, data_point_3, data_point_4, data_point_5, data_point_6, data_point_7, data_point_8, data_point_9, data_point_10, data_point_11, data_point_12, data_point_13, data_point_14, data_point_15, data_point_16, data_point_17, data_point_18, data_point_19, data_point_20, data_point_21, data_point_22, data_point_23, data_point_24, data_point_25, data_point_26, data_point_27, data_point_28, data_point_29, data_point_30, data_point_31, data_point_32, data_point_33, data_point_34, data_point_35, data_point_36, data_point_37, data_point_38, data_point_39, data_point_40, data_point_41, data_point_42, data_point_43, data_point_44, data_point_45, data_point_46, data_point_47, data_point_48, data_point_49, data_point_50, data_point_51, data_point_52, data_point_53, data_point_54, data_point_55, data_point_56, data_point_57, data_point_58, data_point_59, data_point_60, data_point_61, data_point_62, data_point_63, data_point_64, data_point_65, data_point_66, data_point_67, data_point_68, data_point_69, data_point_70, data_point_71, data_point_72, data_point_73, data_point_74, data_point_75, data_point_76 FROM stasm_data WHERE video_id = %d AND frame_id = %d";
@@ -201,7 +206,7 @@ int main (int argc, char *argv[])
         // load source image
         cv::Mat source_image;
         char input_filename[1280];
-        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "../../Output/video_id_%d/img_extract/video_id_%d_%d.png", video_id, video_id, i);
 
 	// print progress bar
   	cout << "\x1B[2K"; // Erase the entire current line.
@@ -259,21 +264,20 @@ int main (int argc, char *argv[])
                 face_landmark_element = NULL;
             }
 
-            // save image to directory ./face_mesh_video_id_*
-            snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s_%d.png", face_mesh_directory, face_mesh_directory, i);
+            // save image to directory delaunay_triangulation/delaunay_triangulation_img
+            snprintf (&output_filename[0], sizeof(output_filename) - 1, "%s/delaunay_triangulation_video_id_%d_%d.png", delaunay_triangulation_img_directory, video_id, i);
             imwrite (output_filename, source_image);
 
         }
     }
 
     /**
-         Create MP4 face_mesh_movie_video_id_* in directory ./face_mesh_VIDEO_ID_*
+         Create MP4 delaunay_triangulation_video_id_*.mp4
     */
-    printf("Creating face mesh video...\n");
 
-    snprintf (&output_filename[0], sizeof(output_filename) - 1,  "./%s/%s.mp4", face_mesh_directory, face_mesh_directory);
+    snprintf (&output_filename[0], sizeof(output_filename) - 1,  "%s/delaunay_triangulation_video_id_%d.mp4", delaunay_triangulation_directory, video_id);
     char video_export_command[1280];
-    snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i ./%s/%s_%%d.png -c:v libx264 ./%s/%s.mp4", frame_rate, face_mesh_directory, face_mesh_directory, face_mesh_directory, face_mesh_directory);
+    snprintf (&video_export_command[0], sizeof(video_export_command) - 1,  "ffmpeg -r %d -start_number 1 -f image2 -i %s/delaunay_triangulation_video_id_%d_%%d.png -c:v libx264 %s/delaunay_triangulation_video_id_%d.mp4", frame_rate, delaunay_triangulation_img_directory, video_id, delaunay_triangulation_directory, video_id);
     printf("%s", video_export_command);
     FILE *pipe_fp;
     pipe_fp = popen(video_export_command, "r");

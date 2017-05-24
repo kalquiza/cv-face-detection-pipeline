@@ -23,7 +23,9 @@ int main (int argc, char *argv[])
     PGconn   *db_connection;
     PGresult *db_result;
     FILE *f = fopen("../database/conninfo", "r");
-    fgets(conninfo, 1280, f);
+    if (fgets(conninfo, 1280, f)==NULL) {
+	printf("Missing database credentials\n");
+    }
     db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
@@ -114,9 +116,15 @@ int main (int argc, char *argv[])
     /**
         Extract images into directory
     */
-    char dir[25] = "video_id_";
-    mkdir (strcat(dir,(char *)video_id), 0755);
-    char img_extract_command_format[] = "ffmpeg -i %s -vf fps=%f ./video_id_%s/video_id_%s_%%d.png";
+
+    char dir_format[] = "../../Output/video_id_%s";
+    char dir[100];
+    sprintf(dir, dir_format, &video_id[0]);
+    mkdir ("../../Output", 0755);
+    mkdir (dir, 0755);
+    mkdir (strcat(dir,"/img_extract"), 0755);
+
+    char img_extract_command_format[] = "ffmpeg -i %s -vf fps=%f ../../Output/video_id_%s/img_extract/video_id_%s_%%d.png";
     char img_extract_command[1280];
     sprintf(img_extract_command, img_extract_command_format, input_video_filename, frame_rate, &video_id[0], &video_id[0]);
     FILE *pipe_fp;

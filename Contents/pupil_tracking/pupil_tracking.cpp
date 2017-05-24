@@ -52,7 +52,9 @@ int main (int argc, char *argv[]) {
     PGconn   *db_connection;
     PGresult *db_result;
     FILE *f = fopen("../database/conninfo", "r");
-    fgets(conninfo, 1280, f);
+    if (fgets(conninfo, 1280, f)==NULL) {
+	printf("Missing database credentials\n");
+    }
     db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK) {
         printf ("Connection to database failed: %s", PQerrorMessage(db_connection));
@@ -107,7 +109,7 @@ int main (int argc, char *argv[]) {
         // load source image
         cv::Mat source_image;
         char input_filename[1280];
-        snprintf(&input_filename[0], sizeof(input_filename) - 1, "./video_id_%d/video_id_%d_%d.png", video_id, video_id, i);
+        snprintf(&input_filename[0], sizeof(input_filename) - 1, "../../Output/video_id_%d/img_extract/video_id_%d_%d.png", video_id, video_id, i);
 
 	// print progress bar
   	cout << "\x1B[2K"; // Erase the entire current line.

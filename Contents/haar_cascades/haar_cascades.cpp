@@ -51,7 +51,9 @@ int main (int argc, char *argv[])
     PGconn   *db_connection;
     PGresult *db_result;
     FILE *f = fopen("../database/conninfo", "r");
-    fgets(conninfo, 1280, f);
+    if (fgets(conninfo, 1280, f)==NULL) {
+	printf("Missing database credentials\n");
+    }
     db_connection = PQconnectdb(conninfo);
     if (PQstatus(db_connection) != CONNECTION_OK)
     {
@@ -106,7 +108,7 @@ int main (int argc, char *argv[])
     */
     for (int i = 1; i <= num_frames; i++) {
         // copy image location
-        char img_dir_format[] = "./video_id_%d/video_id_%d_%d.png";
+        char img_dir_format[] = "../../Output/video_id_%d/img_extract/video_id_%d_%d.png";
         char img_dir[1280];
         sprintf(img_dir, img_dir_format, video_id, video_id, i);
         strcpy (&input_filename[0], img_dir);
