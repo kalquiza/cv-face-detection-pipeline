@@ -128,7 +128,7 @@ int main (int argc, char *argv[])
         flush(cout); // Required
 
         // Find bounding boxes using Haar cascades
-        if (face_cascade.load ("./haarcascade_frontalface_alt2.xml") && left_eye_cascade.load ("./ojoI.xml") && right_eye_cascade.load ("./ojoD.xml") && nose_cascade.load ("./Nariz.xml") && mouth_cascade.load ("./Mouth.xml")) // loaded additional cascades for mouth and nose
+        if (face_cascade.load ("../haar_cascades/haarcascade_frontalface_alt2.xml") && left_eye_cascade.load ("../haar_cascades/ojoI.xml") && right_eye_cascade.load ("../haar_cascades/ojoD.xml") && nose_cascade.load ("../haar_cascades/Nariz.xml") && mouth_cascade.load ("../haar_cascades/Mouth.xml")) // loaded additional cascades for mouth and nose
         {
             bounding_box_face_x           = 0;
             bounding_box_face_y           = 0;
