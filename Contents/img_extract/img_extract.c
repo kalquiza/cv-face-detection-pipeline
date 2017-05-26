@@ -11,6 +11,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string.h>
+ #include <arpa/inet.h>
 #include "/usr/include/postgresql/libpq-fe.h"
 
 int main (int argc, char *argv[])
