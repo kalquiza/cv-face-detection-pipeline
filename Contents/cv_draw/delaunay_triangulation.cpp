@@ -200,7 +200,7 @@ int main (int argc, char *argv[])
     int stasm_x[77], stasm_y[77];
 
     /**
-        For each frame draw fash mesh
+        For each frame draw face mesh
     */
     for (int i = 1; i <= num_frames; i++) {
         // load source image
