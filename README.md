@@ -20,7 +20,7 @@ This computer vision pipeline consists of the following processes/stages:
 6. Active Shape Modelling for Facial Landmarks
 7. Draw Face Mesh using Delaunay Triangulation
 
-IMPORTANT: Each of these processes can be ran independantly in this modular system, however image analysis processes require extracted still images for reference and drawing processes rely on the previous analysis step for significant results in the output video file. For example, if you only require a face mesh video one only needs to run processes 1, 6, and 7.
+IMPORTANT: Each of these processes can be ran independently in this modular system, however image analysis processes require extracted still images for reference and drawing processes rely on the previous analysis step for significant results in the output video file. For example, if you only require a face mesh video one only needs to run processes 1, 6, and 7.
 
 ## Requirements
 This computer vision pipeline uses a number of open source software and libraries:
@@ -33,9 +33,9 @@ This computer vision pipeline uses a number of open source software and librarie
 
 ## Usage
 #### Preparing the database
-In order to run the application it is necessary to create a SQL database to store the results. The schema for this application can be found in the file **db.sql** in the folder **/Contents/database**.
+In order to run the application, it is necessary to create a SQL database to store the results. The schema for this application can be found in the file **db.sql** in the folder **/Contents/database**.
 
-Once the database is initialized, change the information found in **conninfo** in the same folder **/Contents/database** to match your own database creditials.
+Once the database is initialized, change the information found in **conninfo** in the same folder **/Contents/database** to match your own database credentials.
 ```sh
 host = 'localhost' dbname = 'cv_face_detection_pipeline' user = 'kris' password = 'cvface'
 ```
@@ -57,7 +57,7 @@ build $ ./img_extract filename.mp4
 #### Image Processing
 After extracting images from a video file the application will return a video id to be used to identify that particular video in subsequent stages of the pipeline. The output of files can be found in the **/Output** folder created in the root directory under the video's corresponding video id.
 
-Following image extraction calls to subsequent stages in the pipeline will take in the video id as the argument. For example if the video id is 1:
+Following image extraction calls to subsequent stages in the pipeline will take in the video id as the argument. For example, if the video id is 1:
 ```sh
 build $ ./bounding_boxes 1
 build $ ./haar_cascades 1
