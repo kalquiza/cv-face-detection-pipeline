@@ -72,3 +72,7 @@ The results of these processes can then be viewed as stored data in your Postgre
 ### Readings
 - *Accurate eye centre localisation by means of gradients* by Fabian Timm and Erhardt Barth
 - *Active Shape Models - Their Training and Application* by T. F. Cootes, D. Cooper, C. J. Taylor, and J. Graham
+
+
+#### Course Details
+CS 161: Software Project
